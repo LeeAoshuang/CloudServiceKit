@@ -261,8 +261,14 @@ extension CloudServiceProvider {
         var httpheaders = headers
         httpheaders["Authorization"] = "Bearer \(credential?.password ?? "")"
         
+        var allowRedirects = true
+        //微软的下载链接不允许重定向
+        if let path = url.urlComponents?.path, path.contains("me/drive/items"), path.contains("/content") {
+            allowRedirects = false
+        }
+        
         Just.request(method, url: url, params: params, data: data, json: json,
-                     headers: httpheaders, files: files, requestBody: requestBody, asyncProgressHandler: { progress in
+                     headers: httpheaders, files: files, allowRedirects: allowRedirects, requestBody: requestBody, asyncProgressHandler: { progress in
             DispatchQueue.main.async {
                 progressHandler?(progress)
             }

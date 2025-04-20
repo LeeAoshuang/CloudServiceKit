@@ -189,6 +189,7 @@ public class OneDriveServiceProvider: CloudServiceProvider {
             get(url: url) { response in
                 switch response.result {
                 case .success(let result):
+                    print("2.0>>>>>>\(result.response)\n")
                     if let location = result.headers["Content-Location"], let url = URL(string: location) {
                         completion(.success(url))
                     } else if let location = result.headers["Location"], let url = URL(string: location) {
@@ -202,6 +203,29 @@ public class OneDriveServiceProvider: CloudServiceProvider {
             }
         }
     }
+    
+    public func customDownloadLink(of item: CloudItem, completion: @escaping (Result<URL, Error>) -> Void) {
+        if item.isDirectory {
+            completion(.failure(CloudServiceError.unsupported))
+        } else {
+            let url = apiURL.appendingPathComponent("me/drive/items/\(item.id)/content")
+            get(url: url) { response in
+                switch response.result {
+                case .success(let result):
+                    if let location = result.headers["Content-Location"], let url = URL(string: location) {
+                        completion(.success(url))
+                    } else if let location = result.headers["Location"], let url = URL(string: location) {
+                        completion(.success(url))
+                    } else {
+                        completion(.failure(CloudServiceError.responseDecodeError(result)))
+                    }
+                case .failure(let error):
+                    completion(.failure(error))
+                }
+            }
+        }
+    }
+    
     
     /// Get the space usage information for the current user's account.
     /// Document can be found here: https://docs.microsoft.com/en-us/onedrive/developer/rest-api/api/drive_get?view=odsp-graph-online
